@@ -8,7 +8,6 @@ from config import TOKEN
 from handlers.group import delete_join_left
 
 async def webhook_handler(request):
-    """Telegramdan kelgan xabarni qabul qilish"""
     try:
         data = await request.json()
         update = Update.de_json(data, app.bot)
@@ -22,27 +21,24 @@ async def main():
     global app
     app = Application.builder().token(TOKEN).build()
 
-    # Handler’lar
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS | filters.StatusUpdate.LEFT_CHAT_MEMBER, delete_join_left))
 
-    # Webhook sozlamasi
     webhook_url = os.environ.get("WEBHOOK_URL", "https://your-app-name.onrender.com")
     await app.bot.set_webhook(url=webhook_url)
     print(f"Webhook o‘rnatildi: {webhook_url}")
 
-    # Server
     aiohttp_app = web.Application()
     aiohttp_app.router.add_post("/", webhook_handler)
     runner = web.AppRunner(aiohttp_app)
     await runner.setup()
-    port = int(os.environ.get("PORT", 8443))  # Render portni o‘zi beradi
+    port = int(os.environ.get("PORT", 8443))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
 
     await app.initialize()
     await app.start()
     print("Bot webhook rejimida ishlayapti!")
-    await asyncio.Event().wait()  # Botni doimiy ishlashda ushlab turish
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     asyncio.run(main())
